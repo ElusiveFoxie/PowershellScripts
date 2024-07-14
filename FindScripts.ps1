@@ -1,24 +1,27 @@
-$StartSearch="C:\"
-$ExportFile="C:\Windows\Tasks\report.csv"
+param (
+    [Parameter(Mandatory=$true)]
+    [string]$path,  # Directory to start searching
 
-$Extension = @("*.ps1","*.cmd","*.vbs","*.bat")
+    [Parameter(Mandatory=$true)]
+    [string]$o     # Output file path
+)
 
-ForEach ($File in (get-childitem -recurse -path $StartSearch -include $Extension -ErrorAction silentlycontinue)) {
+$Extension = @("*.ps1","*.cmd","*.vbs","*.bat","*.wsf","*.js","*.hta","*.wsh","*.msc","*.sh","*.py","*.sql")
 
-   $Acl = Get-Acl -Path $File.FullName
-   ForEach ($Access in $Acl.Access) {
-$Item = New-Object -TypeName PSObject
+ForEach ($File in (Get-ChildItem -Recurse -Path $path -Include $Extension -ErrorAction SilentlyContinue)) {
+    $Acl = Get-Acl -Path $File.FullName
+    ForEach ($Access in $Acl.Access) {
+        $Item = New-Object -TypeName PSObject
 
- $Item| Add-Member Noteproperty ScanTime -Value $(Get-Date -Format "dd/MM/yyyy HH:mm K")
- $Item| Add-Member Noteproperty FileName -Value $File.FullName
- $Item| Add-Member Noteproperty Group -Value $Access.IdentityReference
- $Item| Add-Member Noteproperty Permissions -Value $Access.FileSystemRights
- $Item| Add-Member Noteproperty Inherited -Value $Access.IsInherited
- $Item| Add-Member Noteproperty LastWriteTime -Value $File.LastWriteTimeUtc
- $Item| Add-Member Noteproperty CreatedOn -Value $File.CreationTimeUtc
- $Item| Add-Member Noteproperty CreateBy -Value $Acl.Owner
- 
+        $Item | Add-Member Noteproperty ScanTime -Value $(Get-Date -Format "dd/MM/yyyy HH:mm K")
+        $Item | Add-Member Noteproperty FileName -Value $File.FullName
+        $Item | Add-Member Noteproperty Group -Value $Access.IdentityReference
+        $Item | Add-Member Noteproperty Permissions -Value $Access.FileSystemRights
+        $Item | Add-Member Noteproperty Inherited -Value $Access.IsInherited
+        $Item | Add-Member Noteproperty LastWriteTime -Value $File.LastWriteTimeUtc
+        $Item | Add-Member Noteproperty CreatedOn -Value $File.CreationTimeUtc
+        $Item | Add-Member Noteproperty CreateBy -Value $Acl.Owner
 
- $Item | Export-Csv -Path $ExportFile -Append -Force -Encoding ASCII -NoTypeInformation 
- }
+        $Item | Export-Csv -Path $o -Append -Force -Encoding ASCII -NoTypeInformation
+    }
 }
